@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError, catchAsync } from '../utils/error-handler';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const SECRET = process.env.JWT_SECRET || 'super-secret-key-unsafe';
 
 export const protect = catchAsync(async (req: any, res: Response, next: NextFunction) => {
   let token;
@@ -15,7 +15,7 @@ export const protect = catchAsync(async (req: any, res: Response, next: NextFunc
   }
 
   try {
-    const decoded: any = jwt.verify(token, JWT_SECRET);
+    const decoded: any = jwt.verify(token, SECRET);
     req.user = decoded;
     next();
   } catch (err) {

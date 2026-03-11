@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 
 import authRouter from "./routes/auth";
 import usersRouter from "./routes/users";
+import studentsRouter from "./routes/students";
 import systemRouter from "./routes/system";
 import announcementsRouter from "./routes/announcements";
 import facilitiesRouter from "./routes/facilities";
@@ -63,6 +64,7 @@ async function startServer() {
 
   app.use("/api/auth", authRouter);
   app.use("/api/users", usersRouter);
+  app.use("/api/students", studentsRouter);
   app.use("/api/system", systemRouter);
   app.use("/api/announcements", announcementsRouter);
   app.use("/api/facilities", facilitiesRouter);

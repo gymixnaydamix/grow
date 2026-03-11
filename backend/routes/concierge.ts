@@ -7,6 +7,12 @@ import { GoogleGenAI } from '@google/genai';
 
 const router = Router();
 
+// Get all ingested documents
+router.get('/documents', protect, catchAsync(async (req: any, res) => {
+  const docs = db.prepare('SELECT id, title, type, created_at FROM documents WHERE school_id = ?').all(req.user.school_id || 'school_1');
+  res.json({ status: 'success', data: docs });
+}));
+
 // Endpoint to "ingest" a document (store its content in DB)
 router.post('/ingest', protect, catchAsync(async (req: any, res) => {
   const { title, content, type } = req.body;

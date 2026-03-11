@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { LayoutDashboard, Activity, BarChart } from 'lucide-react';
 import Overview from './Dashboard/Overview';
 import Metrics from './Dashboard/Metrics';
 import Analytics from './Dashboard/Analytics';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'metrics' | 'analytics'>('overview');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab = location.pathname.split('/').pop() || 'overview';
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-[#F4F5F7]">
@@ -13,21 +16,21 @@ export default function Dashboard() {
         {/* Left Sub-nav Pill */}
         <div className="w-full md:w-fit h-fit bg-white rounded-2xl md:rounded-[2rem] flex flex-row md:flex-col items-center justify-center p-2 md:py-6 md:px-3 xl:px-4 gap-2 md:gap-6 text-gray-400 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 shrink-0 overflow-x-auto no-scrollbar md:-ml-2 lg:-ml-4">
           <button 
-            onClick={() => setActiveTab('overview')}
+            onClick={() => navigate('/dashboard/overview')}
             className={`flex flex-col items-center gap-1 md:gap-2 transition-all min-w-[60px] ${activeTab === 'overview' ? 'text-indigo-600 scale-110' : 'hover:text-gray-900'}`}
           >
             <LayoutDashboard className="w-5 h-5 md:w-6 md:h-6" />
             <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-center leading-tight">Overview</span>
           </button>
           <button 
-            onClick={() => setActiveTab('metrics')}
+            onClick={() => navigate('/dashboard/metrics')}
             className={`flex flex-col items-center gap-1 md:gap-2 transition-all min-w-[60px] ${activeTab === 'metrics' ? 'text-indigo-600 scale-110' : 'hover:text-gray-900'}`}
           >
             <Activity className="w-5 h-5 md:w-6 md:h-6" />
             <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-center leading-tight">Metrics</span>
           </button>
           <button 
-            onClick={() => setActiveTab('analytics')}
+            onClick={() => navigate('/dashboard/analytics')}
             className={`flex flex-col items-center gap-1 md:gap-2 transition-all min-w-[60px] ${activeTab === 'analytics' ? 'text-indigo-600 scale-110' : 'hover:text-gray-900'}`}
           >
             <BarChart className="w-5 h-5 md:w-6 md:h-6" />
@@ -37,9 +40,12 @@ export default function Dashboard() {
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          {activeTab === 'overview' && <Overview />}
-          {activeTab === 'metrics' && <Metrics />}
-          {activeTab === 'analytics' && <Analytics />}
+          <Routes>
+            <Route path="/" element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<Overview />} />
+            <Route path="metrics" element={<Metrics />} />
+            <Route path="analytics" element={<Analytics />} />
+          </Routes>
         </div>
       </div>
     </div>

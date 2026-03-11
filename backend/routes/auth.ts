@@ -6,7 +6,13 @@ import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET is not set in environment variables. Using unsafe default.');
+}
+
+const SECRET = JWT_SECRET || 'super-secret-key-unsafe';
 
 // Initialize a default admin if not exists
 const initAdmin = async () => {
@@ -31,7 +37,7 @@ router.post('/login', catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+  const token = jwt.sign({ id: user.id, role: user.role }, SECRET, {
     expiresIn: '1d',
   });
 
