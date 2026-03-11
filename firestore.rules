@@ -1,0 +1,153 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    //   - email: string
+    //   - role: string ('admin', 'finance', 'staff')
+    //   - name: string
+    //   - createdAt: timestamp
+    // Collection: invoices
+    //   - type: string ('received', 'sent')
+    //   - entityName: string
+    //   - invoiceNumber: string
+    //   - amount: number
+    //   - status: string
+    //   - createdBy: string (uid)
+    //   - createdAt: timestamp
+    // Collection: employees
+    //   - name: string
+    //   - role: string
+    //   - type: string ('Salaried', 'Hourly')
+    //   - rate: number
+    //   - createdAt: timestamp
+    // ===============================================================
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.email == "yasseljebari@gmail.com" && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isFinance() {
+      return isAuthenticated() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'finance')
+      );
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.createdBy;
+    }
+
+    function uidUnchanged() {
+      return !('createdBy' in request.resource.data) || request.resource.data.createdBy == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('createdBy' in request.resource.data) || request.resource.data.createdBy == resource.data.createdBy;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['email', 'role', 'name', 'createdAt']) &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+             data.role in ['admin', 'finance', 'staff'] &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidInvoice(data) {
+      return hasOnlyAllowedFields(['type', 'entityName', 'invoiceNumber', 'amount', 'date', 'dueDate', 'status', 'createdBy', 'createdAt']) &&
+             data.type in ['received', 'sent'] &&
+             data.entityName is string && data.entityName.size() > 0 && data.entityName.size() < 100 &&
+             data.invoiceNumber is string && data.invoiceNumber.size() < 50 &&
+             data.amount is number && data.amount >= 0 &&
+             data.status in ['Draft', 'Pending', 'Approved', 'Paid', 'Overdue'] &&
+             data.createdBy is string && data.createdBy.size() > 0 && data.createdBy.size() < 50 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidEmployee(data) {
+      return hasOnlyAllowedFields(['name', 'role', 'type', 'rate', 'nextPay', 'avatar', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
+             data.type in ['Salaried', 'Hourly'] &&
+             data.rate is number && data.rate >= 0 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidBudget(data) {
+      return hasOnlyAllowedFields(['department', 'allocated', 'spent', 'fiscalYear', 'createdAt']) &&
+             data.department is string && data.department.size() > 0 && data.department.size() < 100 &&
+             data.allocated is number && data.allocated >= 0 &&
+             data.spent is number && data.spent >= 0 &&
+             data.fiscalYear is string && data.fiscalYear.size() > 0 && data.fiscalYear.size() < 20 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidBudgetRequest(data) {
+      return hasOnlyAllowedFields(['department', 'amount', 'requestedBy', 'status', 'createdAt']) &&
+             data.department is string && data.department.size() > 0 && data.department.size() < 100 &&
+             data.amount is number && data.amount > 0 &&
+             data.requestedBy is string && data.requestedBy.size() > 0 && data.requestedBy.size() < 100 &&
+             data.status in ['Pending', 'Approved', 'Rejected'] &&
+             data.createdAt is timestamp;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (
+        (isOwner(userId) && request.resource.data.role == 'staff') || isAdmin()
+      );
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
+        (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin()
+      ) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /invoices/{invoiceId} {
+      allow read: if isFinance();
+      allow create: if isFinance() && isValidInvoice(request.resource.data) && uidUnchanged();
+      allow update: if isFinance() && isValidInvoice(request.resource.data) && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /employees/{employeeId} {
+      allow read: if isFinance();
+      allow create: if isFinance() && isValidEmployee(request.resource.data);
+      allow update: if isFinance() && isValidEmployee(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /budgets/{budgetId} {
+      allow read: if isFinance();
+      allow create: if isFinance() && isValidBudget(request.resource.data);
+      allow update: if isFinance() && isValidBudget(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /budgetRequests/{requestId} {
+      allow read: if isFinance();
+      allow create: if isFinance() && isValidBudgetRequest(request.resource.data);
+      allow update: if isFinance() && isValidBudgetRequest(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+  }
+}

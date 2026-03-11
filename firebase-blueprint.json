@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "finance", "staff"] },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "createdAt"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Financial invoice (sent or received)",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["received", "sent"] },
+        "entityName": { "type": "string", "description": "Vendor or Client name" },
+        "invoiceNumber": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Draft", "Pending", "Approved", "Paid", "Overdue"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "entityName", "amount", "status", "createdBy", "createdAt"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee payroll record",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "type": { "type": "string", "enum": ["Salaried", "Hourly"] },
+        "rate": { "type": "number" },
+        "nextPay": { "type": "string", "format": "date-time" },
+        "avatar": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "role", "type", "rate", "createdAt"]
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Department budget allocation",
+      "type": "object",
+      "properties": {
+        "department": { "type": "string" },
+        "allocated": { "type": "number" },
+        "spent": { "type": "number" },
+        "fiscalYear": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["department", "allocated", "spent", "fiscalYear", "createdAt"]
+    },
+    "BudgetRequest": {
+      "title": "BudgetRequest",
+      "description": "Request for budget approval",
+      "type": "object",
+      "properties": {
+        "department": { "type": "string" },
+        "amount": { "type": "number" },
+        "requestedBy": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["department", "amount", "requestedBy", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/Invoice" },
+      "description": "All invoices"
+    },
+    "/employees/{employeeId}": {
+      "schema": { "$ref": "#/entities/Employee" },
+      "description": "Employee directory for payroll"
+    },
+    "/budgets/{budgetId}": {
+      "schema": { "$ref": "#/entities/Budget" },
+      "description": "Department budgets"
+    },
+    "/budgetRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/BudgetRequest" },
+      "description": "Budget approval requests"
+    }
+  }
+}
