@@ -1,5 +1,6 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
+import morgan from "morgan";
 
 import authRouter from "./routes/auth";
 import usersRouter from "./routes/users";
@@ -56,6 +57,7 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+  app.use(morgan("dev"));
 
   // API routes FIRST
   app.get("/api/health", (req, res) => {

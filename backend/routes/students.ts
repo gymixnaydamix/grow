@@ -8,7 +8,7 @@ const router = Router();
 
 // Get all students
 router.get('/', protect, catchAsync(async (req: any, res) => {
-  const students = db.prepare('SELECT * FROM students WHERE school_id = ?').all(req.user.school_id || 'school_1');
+  const students = db.prepare('SELECT * FROM students WHERE school_id = ?').all(req.user.school_id);
   res.json({ status: 'success', data: students });
 }));
 
@@ -18,7 +18,7 @@ router.post('/', protect, restrictTo('admin', 'admissions'), catchAsync(async (r
   const id = uuidv4();
 
   db.prepare('INSERT INTO students (id, name, email, grade, school_id) VALUES (?, ?, ?, ?, ?)')
-    .run(id, name, email, grade, req.user.school_id || 'school_1');
+    .run(id, name, email, grade, req.user.school_id);
 
   res.status(201).json({ status: 'success', data: { id, name, email, grade } });
 }));

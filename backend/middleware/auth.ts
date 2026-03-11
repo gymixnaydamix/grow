@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError, catchAsync } from '../utils/error-handler';
+import db from '../db';
 
 const SECRET = process.env.JWT_SECRET || 'super-secret-key-unsafe';
 
@@ -16,7 +17,14 @@ export const protect = catchAsync(async (req: any, res: Response, next: NextFunc
 
   try {
     const decoded: any = jwt.verify(token, SECRET);
-    req.user = decoded;
+
+    // Fetch full user to ensure they still exist and get their school_id
+    const user = db.prepare('SELECT id, email, role, school_id FROM users WHERE id = ?').get(decoded.id);
+    if (!user) {
+      return next(new AppError('The user belonging to this token no longer exists.', 401));
+    }
+
+    req.user = user;
     next();
   } catch (err) {
     return next(new AppError('Invalid token. Please log in again.', 401));

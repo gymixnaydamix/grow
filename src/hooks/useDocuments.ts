@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../lib/api-client';
+import toast from 'react-hot-toast';
 
 export function useDocuments() {
   return useQuery({
@@ -20,6 +21,10 @@ export function useIngestDocument() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      toast.success('Document ingested successfully');
     },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to ingest document');
+    }
   });
 }

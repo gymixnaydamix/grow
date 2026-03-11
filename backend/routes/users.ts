@@ -9,7 +9,7 @@ const router = Router();
 
 // Get all users for the current school
 router.get('/', protect, restrictTo('admin'), catchAsync(async (req: any, res) => {
-  const users = db.prepare('SELECT id, email, role, name, created_at FROM users WHERE school_id = ?').all(req.user.school_id || 'school_1');
+  const users = db.prepare('SELECT id, email, role, name, created_at FROM users WHERE school_id = ?').all(req.user.school_id);
   res.json({ status: 'success', data: users });
 }));
 
@@ -21,7 +21,7 @@ router.post('/', protect, restrictTo('admin'), catchAsync(async (req: any, res) 
   const hashedPassword = await bcrypt.hash(password || 'default123', 10);
 
   db.prepare('INSERT INTO users (id, email, password, role, name, school_id) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(id, email, hashedPassword, role, name, req.user.school_id || 'school_1');
+    .run(id, email, hashedPassword, role, name, req.user.school_id);
 
   res.status(201).json({ status: 'success', data: { id, email, role, name } });
 }));

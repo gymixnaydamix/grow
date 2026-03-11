@@ -9,7 +9,7 @@ const router = Router();
 
 // Get all ingested documents
 router.get('/documents', protect, catchAsync(async (req: any, res) => {
-  const docs = db.prepare('SELECT id, title, type, created_at FROM documents WHERE school_id = ?').all(req.user.school_id || 'school_1');
+  const docs = db.prepare('SELECT id, title, type, created_at FROM documents WHERE school_id = ?').all(req.user.school_id);
   res.json({ status: 'success', data: docs });
 }));
 
@@ -19,7 +19,7 @@ router.post('/ingest', protect, catchAsync(async (req: any, res) => {
   const id = uuidv4();
 
   db.prepare('INSERT INTO documents (id, title, content, type, school_id) VALUES (?, ?, ?, ?, ?)')
-    .run(id, title, content, type || 'general', req.user.school_id || 'school_1');
+    .run(id, title, content, type || 'general', req.user.school_id);
 
   res.status(201).json({ status: 'success', data: { id, title } });
 }));
@@ -31,7 +31,7 @@ router.post('/chat', protect, catchAsync(async (req: any, res) => {
   // Simple RAG: find documents related to the message
   // In a real app, use vector search. Here we use basic LIKE for demonstration.
   const docs: any = db.prepare('SELECT content FROM documents WHERE school_id = ? AND content LIKE ? LIMIT 3')
-    .all(req.user.school_id || 'school_1', `%${message}%`);
+    .all(req.user.school_id, `%${message}%`);
 
   const context = docs.map((d: any) => d.content).join('\n\n');
 

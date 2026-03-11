@@ -7,6 +7,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { FirebaseProvider } from './components/FirebaseProvider';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/query-client';
+import { Toaster } from 'react-hot-toast';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <FirebaseProvider>
           <BrowserRouter>
+            <Toaster position="top-right" />
             <App />
           </BrowserRouter>
         </FirebaseProvider>

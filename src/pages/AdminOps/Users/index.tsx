@@ -12,6 +12,7 @@ interface UsersProps {
 export default function Users({ activeSubPage }: UsersProps) {
   const [activeTab, setActiveTab] = useState('All Users');
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const { data: users, isLoading } = useUsers();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -113,8 +114,6 @@ export default function Users({ activeSubPage }: UsersProps) {
         );
       case 'All Users':
       default:
-        const { data: users, isLoading } = useUsers();
-
         if (isLoading) {
           return (
             <div className="flex-1 flex items-center justify-center">

@@ -22,6 +22,7 @@ import ActivityLogs from './pages/ActivityLogs';
 import SettingsPage from './pages/SettingsPage';
 import ConciergeAI from './pages/ConciergeAI';
 import LoginPage from './pages/Login';
+import ProfilePage from './pages/Profile';
 
 const pageToPathMap: Record<string, string> = {
   'Dashboard': 'dashboard',
@@ -240,7 +241,10 @@ export default function App() {
               <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 xl:w-2 xl:h-2 bg-red-500 rounded-full border-2 border-[#F4F5F7]"></span>
             </button>
             {/* Profile */}
-            <div className="flex items-center gap-2 cursor-pointer">
+            <div
+              onClick={() => navigate('/profile')}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <img 
                 src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
                 alt="Admin User" 
@@ -267,6 +271,7 @@ export default function App() {
           <Route path="/logs/*" element={<ActivityLogs activeSubPage={activeSubPage} />} />
           <Route path="/settings/*" element={<SettingsPage activeSubPage={activeSubPage} />} />
           <Route path="/ai/*" element={<ConciergeAI />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<div className="p-8">Page Not Found</div>} />
         </Routes>
 

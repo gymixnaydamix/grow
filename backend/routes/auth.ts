@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { catchAsync, AppError } from '../utils/error-handler';
 import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
+import { protect } from '../middleware/auth';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -49,6 +50,25 @@ router.post('/login', catchAsync(async (req, res, next) => {
       email: user.email,
       role: user.role
     }
+  });
+}));
+
+router.get('/me', protect, catchAsync(async (req: any, res) => {
+  res.json({
+    status: 'success',
+    data: req.user
+  });
+}));
+
+router.patch('/me', protect, catchAsync(async (req: any, res) => {
+  const { name, email } = req.body;
+
+  db.prepare('UPDATE users SET name = ?, email = ? WHERE id = ?')
+    .run(name, email, req.user.id);
+
+  res.json({
+    status: 'success',
+    message: 'Profile updated'
   });
 }));
 
