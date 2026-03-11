@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Loader2, Paperclip, Image as ImageIcon, Mic } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
+import apiClient from '../../lib/api-client';
 
 interface Message {
   id: string;
@@ -46,22 +46,12 @@ export default function ConciergeAI() {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
-      // We'll use a simple generateContent call for now
-      // In a real app, we'd maintain conversation history
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: input,
-        config: {
-          systemInstruction: "You are a highly intelligent, professional AI Concierge for a cutting-edge school ERP system. You assist the school administrator with tasks like analyzing student data, managing admissions, generating reports, and answering operational questions. Be concise, helpful, and maintain a professional yet approachable tone."
-        }
-      });
+      const response = await apiClient.post('/concierge/chat', { message: input });
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.text || 'I apologize, but I could not generate a response.',
+        content: response.data.reply || 'I apologize, but I could not generate a response.',
         timestamp: new Date()
       };
 

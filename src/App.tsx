@@ -20,6 +20,7 @@ import StrategicGoals from './pages/StrategicGoals';
 import ActivityLogs from './pages/ActivityLogs';
 import SettingsPage from './pages/SettingsPage';
 import ConciergeAI from './pages/ConciergeAI';
+import LoginPage from './pages/Login';
 
 const headerButtonsConfig: Record<string, { icon: any, label: string }[]> = {
   'Dashboard': [
@@ -109,6 +110,12 @@ export default function App() {
   const [activePage, setActivePage] = useState('Platform Core');
   const [activeSubPage, setActiveSubPage] = useState('Auth & Roles');
   const [showBottomIcons, setShowBottomIcons] = useState(false);
+
+  const isAuthenticated = !!localStorage.getItem('auth_token');
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   return (
     <div className="flex h-screen bg-[#F4F5F7] font-sans overflow-hidden text-sm md:text-base">

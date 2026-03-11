@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 
+import authRouter from "./routes/auth";
 import usersRouter from "./routes/users";
 import systemRouter from "./routes/system";
 import announcementsRouter from "./routes/announcements";
@@ -46,6 +47,8 @@ import localizationRouter from "./routes/localization";
 import overviewRouter from "./routes/overview";
 import metricsRouter from "./routes/metrics";
 import analyticsRouter from "./routes/analytics";
+import conciergeRouter from "./routes/concierge";
+import { errorHandler } from "./utils/error-handler";
 
 async function startServer() {
   const app = express();
@@ -58,6 +61,7 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  app.use("/api/auth", authRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/system", systemRouter);
   app.use("/api/announcements", announcementsRouter);
@@ -103,6 +107,10 @@ async function startServer() {
   app.use("/api/overview", overviewRouter);
   app.use("/api/metrics", metricsRouter);
   app.use("/api/analytics", analyticsRouter);
+  app.use("/api/concierge", conciergeRouter);
+
+  // Error handler
+  app.use(errorHandler);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
