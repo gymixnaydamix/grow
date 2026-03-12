@@ -4,7 +4,7 @@ import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import { catchAsync } from '../utils/error-handler';
-import { v4 as uuidv4 as uuid } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 

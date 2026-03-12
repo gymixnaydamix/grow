@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Users, DollarSign, TrendingUp, Activity, CheckCircle, Clock, Info, Loader2 } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Activity, CheckCircle, Clock, Info } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import apiClient from '../../lib/api-client';
+import { OverviewSkeleton } from '../../components/Skeleton';
 
 interface OverviewData {
   activeUsers: number;
@@ -18,6 +20,7 @@ interface OverviewData {
 }
 
 export default function Overview() {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ['overview'],
     queryFn: async () => {
@@ -27,11 +30,7 @@ export default function Overview() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
-      </div>
-    );
+    return <OverviewSkeleton />;
   }
 
   if (!data) return null;
@@ -69,7 +68,7 @@ export default function Overview() {
             </span>
           </div>
           <div className="relative z-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">Active Users</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">{t('dashboard.active_users')}</p>
             <h3 className="text-5xl font-light tracking-tighter text-gray-900">{data.activeUsers.toLocaleString()}</h3>
           </div>
         </div>
@@ -85,7 +84,7 @@ export default function Overview() {
             </span>
           </div>
           <div className="relative z-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">Total Revenue</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">{t('dashboard.total_revenue')}</p>
             <h3 className="text-5xl font-light tracking-tighter text-gray-900">${(data.revenue / 1000).toFixed(1)}k</h3>
           </div>
         </div>
@@ -101,7 +100,7 @@ export default function Overview() {
             </span>
           </div>
           <div className="relative z-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">Growth Rate</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">{t('dashboard.growth_rate')}</p>
             <h3 className="text-5xl font-light tracking-tighter text-gray-900">{data.growth}%</h3>
           </div>
         </div>
@@ -118,7 +117,7 @@ export default function Overview() {
             </span>
           </div>
           <div className="relative z-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">System Status</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-2">{t('dashboard.system_status')}</p>
             <h3 className="text-4xl font-light tracking-tighter text-gray-900 truncate">{data.systemStatus}</h3>
           </div>
         </div>

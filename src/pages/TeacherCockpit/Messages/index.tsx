@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
-import { MessageSquare, Send, Inbox, Search, Edit, MoreVertical, Star, Paperclip, Reply } from 'lucide-react';
+import { MessageSquare, Send, Inbox, Search, Edit, MoreVertical, Star, Paperclip, Reply, Loader2 } from 'lucide-react';
+import { useMessages } from '../../../hooks/useMessages';
 
 export default function Messages() {
   const [activeTab, setActiveTab] = useState('Inbox');
-  const [selectedMessage, setSelectedMessage] = useState<number | null>(null);
-
-  const messages = [
-    { id: 1, sender: 'Alice Johnson', subject: 'Question about Homework 4', preview: 'Hi Professor, I was wondering if you could clarify the requirements for...', time: '10:30 AM', unread: true, starred: false },
-    { id: 2, sender: 'Bob Smith', subject: 'Absence on Tuesday', preview: 'I will not be able to attend class this Tuesday due to a medical appointment.', time: 'Yesterday', unread: false, starred: true },
-    { id: 3, sender: 'Department Head', subject: 'Faculty Meeting Agenda', preview: 'Please review the attached agenda for our upcoming faculty meeting.', time: 'Oct 24', unread: false, starred: false, hasAttachment: true },
-    { id: 4, sender: 'Charlie Davis', subject: 'Extension Request', preview: 'Would it be possible to get a 24-hour extension on the essay draft?', time: 'Oct 23', unread: false, starred: false },
-  ];
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const { data: messages, isLoading } = useMessages();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -24,6 +19,8 @@ export default function Messages() {
         );
       case 'Inbox':
       default:
+        const selectedMessage = messages?.find((m: any) => m.id === selectedMessageId);
+
         return (
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-6 shrink-0">
@@ -46,43 +43,48 @@ export default function Messages() {
             
             <div className="flex-1 flex min-h-0 border border-gray-200 rounded-2xl overflow-hidden">
               {/* Message List */}
-              <div className={`w-full md:w-1/3 border-r border-gray-200 flex flex-col bg-gray-50/50 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
+              <div className={`w-full md:w-1/3 border-r border-gray-200 flex flex-col bg-gray-50/50 ${selectedMessageId ? 'hidden md:flex' : 'flex'}`}>
                 <div className="overflow-y-auto flex-1">
-                  {messages.map((msg) => (
-                    <div 
-                      key={msg.id}
-                      onClick={() => setSelectedMessage(msg.id)}
-                      className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
-                        selectedMessage === msg.id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : 
-                        msg.unread ? 'bg-white border-l-4 border-l-transparent' : 'bg-transparent border-l-4 border-l-transparent hover:bg-white'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className={`text-sm truncate pr-2 ${msg.unread ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
-                          {msg.sender}
-                        </h4>
-                        <span className="text-xs text-gray-500 whitespace-nowrap">{msg.time}</span>
+                  {isLoading ? (
+                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-indigo-500" /></div>
+                  ) : messages?.length === 0 ? (
+                    <div className="p-10 text-center text-gray-400">No messages found</div>
+                  ) : (
+                    messages?.map((msg: any) => (
+                      <div
+                        key={msg.id}
+                        onClick={() => setSelectedMessageId(msg.id)}
+                        className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
+                          selectedMessageId === msg.id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' :
+                          'bg-transparent border-l-4 border-l-transparent hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className="text-sm font-bold text-gray-900 truncate pr-2">
+                            From: {msg.sender_id.slice(0, 8)}
+                          </h4>
+                          <span className="text-xs text-gray-500 whitespace-nowrap">{new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h5 className="text-sm text-gray-800 font-semibold truncate">
+                            {msg.subject || '(No Subject)'}
+                          </h5>
+                        </div>
+                        <p className="text-xs text-gray-500 line-clamp-2">{msg.content}</p>
                       </div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h5 className={`text-sm truncate ${msg.unread ? 'font-bold text-gray-900' : 'text-gray-800'}`}>
-                          {msg.subject}
-                        </h5>
-                        {msg.hasAttachment && <Paperclip className="w-3 h-3 text-gray-400 shrink-0" />}
-                      </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">{msg.preview}</p>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
 
               {/* Message Detail */}
-              <div className={`flex-1 flex flex-col bg-white ${!selectedMessage ? 'hidden md:flex' : 'flex'}`}>
+              <div className={`flex-1 flex flex-col bg-white ${!selectedMessageId ? 'hidden md:flex' : 'flex'}`}>
                 {selectedMessage ? (
                   <>
                     <div className="p-6 border-b border-gray-100 shrink-0">
                       <div className="flex justify-between items-start mb-4">
                         <h3 className="text-xl font-bold text-gray-900">
-                          {messages.find(m => m.id === selectedMessage)?.subject}
+                          {selectedMessage.subject || '(No Subject)'}
                         </h3>
                         <div className="flex items-center gap-2">
                           <button className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors">
@@ -98,21 +100,16 @@ export default function Messages() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-                          {messages.find(m => m.id === selectedMessage)?.sender.charAt(0)}
+                          {selectedMessage.sender_id.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{messages.find(m => m.id === selectedMessage)?.sender}</p>
-                          <p className="text-xs text-gray-500">to me • {messages.find(m => m.id === selectedMessage)?.time}</p>
+                          <p className="font-medium text-gray-900">User {selectedMessage.sender_id.slice(0, 8)}</p>
+                          <p className="text-xs text-gray-500">to me • {new Date(selectedMessage.created_at).toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="p-6 flex-1 overflow-y-auto text-gray-700 text-sm leading-relaxed">
-                      <p className="mb-4">Dear Professor,</p>
-                      <p className="mb-4">I hope this email finds you well.</p>
-                      <p className="mb-4">{messages.find(m => m.id === selectedMessage)?.preview} I've read through the syllabus but I'm still a bit confused about the specific formatting requirements for the final submission.</p>
-                      <p className="mb-4">Could you please let me know if we should use APA or MLA format? Also, is there a minimum word count?</p>
-                      <p className="mb-4">Thank you for your time.</p>
-                      <p>Best regards,<br/>{messages.find(m => m.id === selectedMessage)?.sender}</p>
+                    <div className="p-6 flex-1 overflow-y-auto text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                      {selectedMessage.content}
                     </div>
                     <div className="p-4 border-t border-gray-100 shrink-0 bg-gray-50/50">
                       <div className="bg-white border border-gray-200 rounded-xl p-2 flex items-end gap-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
@@ -143,7 +140,6 @@ export default function Messages() {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex-1 flex flex-col md:flex-row px-4 md:px-6 gap-4 md:gap-6 overflow-hidden min-h-0">
-        {/* Left Sub-nav Pill */}
         <div className="w-full md:w-fit h-fit bg-[#645C9A] rounded-2xl md:rounded-[2rem] flex flex-row md:flex-col items-center justify-center p-2 md:py-6 md:px-3 xl:px-4 gap-2 md:gap-6 text-white/60 shadow-sm shrink-0 overflow-x-auto no-scrollbar md:-ml-2 lg:-ml-4">
           <button 
             onClick={() => setActiveTab('Inbox')}
@@ -168,7 +164,6 @@ export default function Messages() {
           </button>
         </div>
 
-        {/* White Content Card */}
         <div className="flex-1 bg-white rounded-2xl md:rounded-[2rem] p-6 md:p-8 xl:p-10 shadow-sm flex flex-col min-h-0 overflow-hidden">
           {renderContent()}
         </div>
