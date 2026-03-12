@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   Search, Bell, ChevronDown, User, Settings, Building, Bus, Package, 
   ShieldCheck, UserPlus, TrendingUp, LayoutDashboard, CheckCircle2, 
@@ -20,6 +22,24 @@ import StrategicGoals from './pages/StrategicGoals';
 import ActivityLogs from './pages/ActivityLogs';
 import SettingsPage from './pages/SettingsPage';
 import ConciergeAI from './pages/ConciergeAI';
+import LoginPage from './pages/Login';
+import ProfilePage from './pages/Profile';
+import NotificationDrawer from './components/NotificationDrawer';
+
+const pageToPathMap: Record<string, string> = {
+  'Dashboard': 'dashboard',
+  'Platform Core': 'platform',
+  'Finance': 'finance',
+  'HR & Staff': 'hr',
+  'Admissions': 'admissions',
+  'Student Portal': 'student',
+  'Teacher Cockpit': 'teacher',
+  'Credentials': 'credentials',
+  'Strategic Goals': 'strategic',
+  'Activity Logs': 'logs',
+  'Settings': 'settings',
+  'Concierge AI': 'ai',
+};
 
 const headerButtonsConfig: Record<string, { icon: any, label: string }[]> = {
   'Dashboard': [
@@ -104,11 +124,66 @@ const headerButtonsConfig: Record<string, { icon: any, label: string }[]> = {
 };
 
 export default function App() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [activePage, setActivePage] = useState('Platform Core');
   const [activeSubPage, setActiveSubPage] = useState('Auth & Roles');
   const [showBottomIcons, setShowBottomIcons] = useState(false);
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
+
+  const isAuthenticated = !!localStorage.getItem('auth_token');
+
+  // Sync activePage and activeSubPage with URL
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/') return;
+
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length > 0) {
+      // Find active page by slug
+      const pageEntry = Object.entries(pageToPathMap).find(([_, p]) => p === parts[0]);
+      if (pageEntry) {
+        setActivePage(pageEntry[0]);
+        if (parts.length > 1) {
+          // Find subpage by slug
+          const subPageLabel = parts[1].replace(/-/g, ' ');
+          const formattedSubPage = subPageLabel.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          setActiveSubPage(formattedSubPage);
+        } else {
+          setActiveSubPage(headerButtonsConfig[pageEntry[0]]?.[0]?.label || '');
+        }
+      }
+    }
+  }, [location.pathname]);
+
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
+  const handlePageChange = (pageLabel: string) => {
+    setActivePage(pageLabel);
+    const subPageLabel = headerButtonsConfig[pageLabel]?.[0]?.label || '';
+    setActiveSubPage(subPageLabel);
+
+    const pagePath = pageToPathMap[pageLabel];
+    const subPath = subPageLabel.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/${pagePath}/${subPath}`);
+  };
+
+  const handleSubPageChange = (subPageLabel: string) => {
+    setActiveSubPage(subPageLabel);
+    const pagePath = pageToPathMap[activePage];
+    const subPath = subPageLabel.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/${pagePath}/${subPath}`);
+  };
 
   return (
     <div className="flex h-screen bg-[#F4F5F7] font-sans overflow-hidden text-sm md:text-base">
@@ -122,7 +197,10 @@ export default function App() {
           <div className="flex justify-end items-center w-full lg:hidden">
             {/* Search & User (Mobile) */}
             <div className="flex items-center gap-4">
-              <button className="relative text-gray-500 hover:text-gray-700">
+              <button
+                onClick={() => setIsNotificationDrawerOpen(true)}
+                className="relative text-gray-500 hover:text-gray-700"
+              >
                 <Bell className="w-5 h-5" />
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[#F4F5F7]"></span>
               </button>
@@ -143,7 +221,7 @@ export default function App() {
               return (
                 <button 
                   key={idx} 
-                  onClick={() => setActiveSubPage(btn.label)}
+                  onClick={() => handleSubPageChange(btn.label)}
                   className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 xl:px-5 py-2 md:py-2.5 transition-colors whitespace-nowrap ${isActive ? 'bg-white/10 text-white font-medium' : 'hover:bg-white/5'}`}
                 >
                   <btn.icon className="w-4 h-4" />
@@ -165,12 +243,18 @@ export default function App() {
               />
             </div>
             {/* Bell */}
-            <button className="relative text-gray-500 hover:text-gray-700">
+            <button
+              onClick={() => setIsNotificationDrawerOpen(true)}
+              className="relative text-gray-500 hover:text-gray-700"
+            >
               <Bell className="w-4 h-4 xl:w-5 xl:h-5" />
               <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 xl:w-2 xl:h-2 bg-red-500 rounded-full border-2 border-[#F4F5F7]"></span>
             </button>
             {/* Profile */}
-            <div className="flex items-center gap-2 cursor-pointer">
+            <div
+              onClick={() => navigate('/profile')}
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <img 
                 src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
                 alt="Admin User" 
@@ -183,18 +267,23 @@ export default function App() {
         </div>
 
         {/* Main Content Area */}
-        {activePage === 'Dashboard' && <Dashboard />}
-        {activePage === 'Platform Core' && <AdminOps activeSubPage={activeSubPage} />}
-        {activePage === 'Finance' && <Finance activeSubPage={activeSubPage} />}
-        {activePage === 'HR & Staff' && <HRStaff activeSubPage={activeSubPage} />}
-        {activePage === 'Admissions' && <Admissions activeSubPage={activeSubPage} />}
-        {activePage === 'Student Portal' && <StudentPortal activeSubPage={activeSubPage} />}
-        {activePage === 'Teacher Cockpit' && <TeacherCockpit activeSubPage={activeSubPage} />}
-        {activePage === 'Credentials' && <Credentials activeSubPage={activeSubPage} />}
-        {activePage === 'Strategic Goals' && <StrategicGoals activeSubPage={activeSubPage} />}
-        {activePage === 'Activity Logs' && <ActivityLogs activeSubPage={activeSubPage} />}
-        {activePage === 'Settings' && <SettingsPage activeSubPage={activeSubPage} />}
-        {activePage === 'Concierge AI' && <ConciergeAI />}
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard/overview" replace />} />
+          <Route path="/dashboard/*" element={<Dashboard />} />
+          <Route path="/platform/*" element={<AdminOps activeSubPage={activeSubPage} />} />
+          <Route path="/finance/*" element={<Finance activeSubPage={activeSubPage} />} />
+          <Route path="/hr/*" element={<HRStaff activeSubPage={activeSubPage} />} />
+          <Route path="/admissions/*" element={<Admissions activeSubPage={activeSubPage} />} />
+          <Route path="/student/*" element={<StudentPortal activeSubPage={activeSubPage} />} />
+          <Route path="/teacher/*" element={<TeacherCockpit activeSubPage={activeSubPage} />} />
+          <Route path="/credentials/*" element={<Credentials activeSubPage={activeSubPage} />} />
+          <Route path="/strategic/*" element={<StrategicGoals activeSubPage={activeSubPage} />} />
+          <Route path="/logs/*" element={<ActivityLogs activeSubPage={activeSubPage} />} />
+          <Route path="/settings/*" element={<SettingsPage activeSubPage={activeSubPage} />} />
+          <Route path="/ai/*" element={<ConciergeAI />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="*" element={<div className="p-8">Page Not Found</div>} />
+        </Routes>
 
         {/* Bottom Bar */}
         <div className="px-4 md:px-6 pb-4 md:pb-6 xl:pb-8 pt-4 md:pt-6 xl:pt-8 shrink-0 z-20">
@@ -231,9 +320,8 @@ export default function App() {
             </div>
             
             {/* Right Button */}
-            <button className="bg-[#4F46E5] text-white px-3 py-2 md:px-5 md:py-3 xl:px-8 xl:py-4 rounded-lg md:rounded-xl xl:rounded-2xl font-semibold text-xs md:text-sm xl:text-lg shadow-md hover:bg-indigo-700 transition-colors whitespace-nowrap shrink-0">
-              <span className="hidden sm:inline">{activePage}</span>
-              <span className="sm:hidden">{activePage}</span>
+            <button className="bg-[#4F46E5] text-white px-3 py-2 md:px-5 md:py-3 xl:px-8 xl:py-4 rounded-lg md:rounded-xl xl:rounded-2xl font-semibold text-xs md:text-sm xl:text-lg shadow-md hover:bg-indigo-700 transition-colors whitespace-nowrap shrink-0 uppercase tracking-widest">
+              {t(`nav.${Object.entries(pageToPathMap).find(([label]) => label === activePage)?.[1] || 'dashboard'}`)}
             </button>
           </div>
         </div>
@@ -285,10 +373,7 @@ export default function App() {
             return (
             <button 
               key={i} 
-              onClick={() => {
-                setActivePage(item.label);
-                setActiveSubPage(headerButtonsConfig[item.label]?.[0]?.label || '');
-              }}
+              onClick={() => handlePageChange(item.label)}
               className={`flex flex-col items-center justify-center gap-1 py-1.5 xl:py-2 px-2 lg:px-0 rounded-lg xl:rounded-xl transition-all duration-300 min-w-[64px] lg:min-w-0 shrink-0 ${
                 isActive && !isConcierge ? 'bg-[#4F46E5] text-white' : 
                 isActive && isConcierge ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' :
@@ -308,6 +393,10 @@ export default function App() {
       </div>
       
       {/* Mobile Overlay (Removed since menu is always visible at bottom) */}
+      <NotificationDrawer
+        isOpen={isNotificationDrawerOpen}
+        onClose={() => setIsNotificationDrawerOpen(false)}
+      />
     </div>
   );
 }

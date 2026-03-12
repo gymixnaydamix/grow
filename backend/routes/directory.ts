@@ -1,15 +1,15 @@
 import { Router } from 'express';
+import db from '../db';
+import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
 
 const router = Router();
+router.use(protect);
 
-// Get directory
-router.get('/', (req, res) => {
-  res.json({ message: 'Directory listing' });
-});
-
-// Add to directory
-router.post('/', (req, res) => {
-  res.json({ message: 'Directory entry created' });
-});
+router.get('/', catchAsync(async (req: any, res) => {
+  // Staff are just users with non-student roles
+  const data = db.prepare('SELECT id, name, email, role FROM users WHERE school_id = ? AND role != "student"').all(req.user.school_id);
+  res.json({ status: 'success', data });
+}));
 
 export default router;

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { 
-  Users as UsersIcon, ShieldCheck, UserPlus, Search, Filter, MoreVertical, Edit2, Trash2, CheckCircle, XCircle, Mail
+  Users as UsersIcon, ShieldCheck, UserPlus, Search, Filter, MoreVertical, Edit2, Trash2, CheckCircle, XCircle, Mail, Loader2
 } from 'lucide-react';
 import AddUserModal from './AddUserModal';
+import { useUsers } from '../../../hooks/useUsers';
 
 interface UsersProps {
   activeSubPage: string;
@@ -11,6 +12,7 @@ interface UsersProps {
 export default function Users({ activeSubPage }: UsersProps) {
   const [activeTab, setActiveTab] = useState('All Users');
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const { data: users, isLoading } = useUsers();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -112,6 +114,14 @@ export default function Users({ activeSubPage }: UsersProps) {
         );
       case 'All Users':
       default:
+        if (isLoading) {
+          return (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            </div>
+          );
+        }
+
         return (
           <div className="flex-1 flex flex-col min-h-0">
             {/* Search and Filter Bar */}
@@ -138,24 +148,20 @@ export default function Users({ activeSubPage }: UsersProps) {
                     <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">User</th>
                     <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Role</th>
                     <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Status</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Last Active</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Joined</th>
                     <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {[
-                    { name: 'Sarah Jenkins', email: 'sarah.j@school.edu', role: 'Super Admin', status: 'Active', lastActive: '2 mins ago', avatar: 'https://i.pravatar.cc/150?u=1' },
-                    { name: 'Michael Chen', email: 'm.chen@school.edu', role: 'Principal', status: 'Active', lastActive: '1 hour ago', avatar: 'https://i.pravatar.cc/150?u=2' },
-                    { name: 'Emily Rodriguez', email: 'erodriguez@school.edu', role: 'Teacher', status: 'Inactive', lastActive: '2 days ago', avatar: 'https://i.pravatar.cc/150?u=3' },
-                    { name: 'David Kim', email: 'dkim@school.edu', role: 'IT Support', status: 'Active', lastActive: 'Just now', avatar: 'https://i.pravatar.cc/150?u=4' },
-                    { name: 'Jessica Taylor', email: 'jtaylor@school.edu', role: 'Admissions Officer', status: 'Active', lastActive: '5 hours ago', avatar: 'https://i.pravatar.cc/150?u=5' },
-                  ].map((user, i) => (
-                    <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
+                  {users?.map((user: any, i: number) => (
+                    <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border border-gray-200" />
+                          <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                            {user.name?.[0] || user.email[0].toUpperCase()}
+                          </div>
                           <div>
-                            <div className="font-medium text-gray-900">{user.name}</div>
+                            <div className="font-medium text-gray-900">{user.name || 'No Name'}</div>
                             <div className="text-xs text-gray-500">{user.email}</div>
                           </div>
                         </div>
@@ -166,17 +172,13 @@ export default function Users({ activeSubPage }: UsersProps) {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          user.status === 'Active' 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                            : 'bg-gray-50 text-gray-600 border-gray-200'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
-                          {user.status}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Active
                         </span>
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-500">
-                        {user.lastActive}
+                        {new Date(user.created_at).toLocaleDateString()}
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

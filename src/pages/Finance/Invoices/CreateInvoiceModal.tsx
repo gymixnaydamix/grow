@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { X, AlertCircle } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '../../../firebase';
-import { handleFirestoreError, OperationType } from '../../../utils/firestoreErrorHandler';
+import { X, AlertCircle, Loader2 } from 'lucide-react';
+import { useInvoices } from '../../../hooks/useInvoices';
+import toast from 'react-hot-toast';
 
 interface CreateInvoiceModalProps {
   isOpen: boolean;
@@ -11,45 +10,36 @@ interface CreateInvoiceModalProps {
 }
 
 export default function CreateInvoiceModal({ isOpen, onClose, type }: CreateInvoiceModalProps) {
-  const [entityName, setEntityName] = useState('');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [status, setStatus] = useState('Draft');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState('pending');
+
+  const { createInvoice } = useInvoices();
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const invoiceData = {
-        type,
-        entityName,
-        invoiceNumber,
-        amount: parseFloat(amount),
-        date: new Date(date).toISOString(),
-        dueDate: new Date(dueDate).toISOString(),
-        status,
-        createdBy: auth.currentUser.uid,
-        createdAt: serverTimestamp(),
-      };
-
-      await addDoc(collection(db, 'invoices'), invoiceData);
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      handleFirestoreError(err, OperationType.CREATE, 'invoices', auth);
-    } finally {
-      setLoading(false);
-    }
+    createInvoice.mutate({
+      student_id: studentId,
+      amount: parseFloat(amount),
+      status: status as any,
+      due_date: new Date(dueDate).toISOString(),
+    }, {
+      onSuccess: () => {
+        toast.success('Invoice created successfully');
+        onClose();
+        setStudentId('');
+        setAmount('');
+        setDueDate('');
+        setStatus('pending');
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.message || 'Failed to create invoice');
+      }
+    });
   };
 
   return (
@@ -77,27 +67,15 @@ export default function CreateInvoiceModal({ isOpen, onClose, type }: CreateInvo
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {type === 'received' ? 'Vendor Name' : 'Client Name'}
+              Student ID
             </label>
             <input
               type="text"
               required
-              value={entityName}
-              onChange={(e) => setEntityName(e.target.value)}
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
               className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder={type === 'received' ? 'e.g. Office Supplies Co.' : 'e.g. John Doe'}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
-            <input
-              type="text"
-              required
-              value={invoiceNumber}
-              onChange={(e) => setInvoiceNumber(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="e.g. INV-2023-001"
+              placeholder="STU-123456"
             />
           </div>
 
@@ -115,27 +93,15 @@ export default function CreateInvoiceModal({ isOpen, onClose, type }: CreateInvo
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-              <input
-                type="date"
-                required
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <input
+              type="date"
+              required
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
 
           <div>
@@ -145,11 +111,9 @@ export default function CreateInvoiceModal({ isOpen, onClose, type }: CreateInvo
               onChange={(e) => setStatus(e.target.value)}
               className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="Draft">Draft</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Paid">Paid</option>
-              <option value="Overdue">Overdue</option>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
             </select>
           </div>
 
@@ -163,11 +127,11 @@ export default function CreateInvoiceModal({ isOpen, onClose, type }: CreateInvo
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={createInvoice.isPending}
               className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center"
             >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              {createInvoice.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 'Save Invoice'
               )}

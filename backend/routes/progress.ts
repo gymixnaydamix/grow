@@ -1,15 +1,23 @@
 import { Router } from 'express';
+import db from '../db';
+import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
+router.use(protect);
 
-// Get all progress records
-router.get('/', (req, res) => {
-  res.json({ message: 'List of progress records' });
-});
+router.get('/', catchAsync(async (req: any, res) => {
+  const data = db.prepare('SELECT * FROM audit_logs WHERE school_id = ? AND action = "progress_record"').all(req.user.school_id);
+  res.json({ status: 'success', data });
+}));
 
-// Create a new progress record
-router.post('/', (req, res) => {
-  res.json({ message: 'Progress record created' });
-});
+router.post('/', catchAsync(async (req: any, res) => {
+  const { type, value, details } = req.body;
+  const id = uuidv4();
+  db.prepare('INSERT INTO audit_logs (id, user_id, action, details, school_id) VALUES (?, ?, ?, ?, ?)')
+    .run(id, req.user.id, "progress_record", `Recorded ${type} progress: ${value}. ${details}`, req.user.school_id);
+  res.status(201).json({ status: 'success', data: { id } });
+}));
 
 export default router;

@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { MonitorPlay, Users, CalendarCheck, Search, Filter, MoreVertical, CheckCircle, XCircle, Clock, BookOpen, UserCheck, MapPin } from 'lucide-react';
+import { MonitorPlay, Users, CalendarCheck, Search, Filter, MoreVertical, CheckCircle, XCircle, Clock, BookOpen, UserCheck, MapPin, Loader2 } from 'lucide-react';
+import { useClasses } from '../../../hooks/useClasses';
+import { useStudents } from '../../../hooks/useStudents';
 
 export default function Classes() {
   const [activeTab, setActiveTab] = useState('Overview');
+  const { data: classes, isLoading: isClassesLoading } = useClasses();
+  const { data: students, isLoading: isStudentsLoading } = useStudents();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -28,53 +32,55 @@ export default function Classes() {
             </div>
             
             <div className="flex-1 min-h-0 overflow-auto border border-gray-100 rounded-2xl">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-50/50 sticky top-0 z-10 backdrop-blur-sm">
-                  <tr>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Student Name</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">ID Number</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Email</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Status</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {[
-                    { name: 'Alice Johnson', id: 'STU-2023-001', email: 'alice.j@university.edu', status: 'Active' },
-                    { name: 'Bob Smith', id: 'STU-2023-042', email: 'bob.smith@university.edu', status: 'Active' },
-                    { name: 'Charlie Davis', id: 'STU-2023-089', email: 'c.davis@university.edu', status: 'At Risk' },
-                    { name: 'Diana Prince', id: 'STU-2023-105', email: 'diana.p@university.edu', status: 'Active' },
-                    { name: 'Evan Wright', id: 'STU-2023-112', email: 'evan.w@university.edu', status: 'Inactive' },
-                  ].map((student, i) => (
-                    <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
-                            {student.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <span className="font-medium text-gray-900">{student.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-500">{student.id}</td>
-                      <td className="py-4 px-6 text-sm text-gray-500">{student.email}</td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          student.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
-                          student.status === 'At Risk' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                          'bg-gray-50 text-gray-700 border-gray-200'
-                        }`}>
-                          {student.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </td>
+              {isStudentsLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                    <tr>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Student Name</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">ID Number</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Email</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Status</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {students?.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-gray-500 italic">No students found</td>
+                      </tr>
+                    ) : (
+                      students?.map((student: any, i: number) => (
+                        <tr key={student.id} className="hover:bg-gray-50/50 transition-colors group">
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                {student.name.split(' ').map((n: string) => n[0]).join('')}
+                              </div>
+                              <span className="font-medium text-gray-900">{student.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-sm text-gray-500">{student.id.slice(0, 8)}</td>
+                          <td className="py-4 px-6 text-sm text-gray-500">{student.email}</td>
+                          <td className="py-4 px-6">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-100`}>
+                              Active
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         );
@@ -84,7 +90,7 @@ export default function Classes() {
             <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-xl font-bold text-gray-900">Take Attendance</h2>
               <div className="flex items-center gap-3">
-                <input type="date" className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" defaultValue="2023-10-24" />
+                <input type="date" className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={new Date().toISOString().split('T')[0]} />
                 <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors">
                   Save Records
                 </button>
@@ -92,42 +98,42 @@ export default function Classes() {
             </div>
             
             <div className="flex-1 min-h-0 overflow-auto border border-gray-100 rounded-2xl">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-50/50 sticky top-0 z-10 backdrop-blur-sm">
-                  <tr>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Student Name</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-center">Present</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-center">Late</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-center">Absent</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Notes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {[
-                    { name: 'Alice Johnson', status: 'present' },
-                    { name: 'Bob Smith', status: 'present' },
-                    { name: 'Charlie Davis', status: 'late' },
-                    { name: 'Diana Prince', status: 'absent' },
-                    { name: 'Evan Wright', status: 'present' },
-                  ].map((student, i) => (
-                    <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="py-4 px-6 font-medium text-gray-900">{student.name}</td>
-                      <td className="py-4 px-6 text-center">
-                        <input type="radio" name={`attendance-${i}`} defaultChecked={student.status === 'present'} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <input type="radio" name={`attendance-${i}`} defaultChecked={student.status === 'late'} className="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300" />
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <input type="radio" name={`attendance-${i}`} defaultChecked={student.status === 'absent'} className="w-4 h-4 text-rose-600 focus:ring-rose-500 border-gray-300" />
-                      </td>
-                      <td className="py-4 px-6">
-                        <input type="text" placeholder="Add note..." className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                      </td>
+              {isStudentsLoading ? (
+                 <div className="flex items-center justify-center h-64">
+                   <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                 </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                    <tr>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Student Name</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-center">Present</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-center">Late</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-center">Absent</th>
+                      <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Notes</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {students?.map((student: any, i: number) => (
+                      <tr key={student.id} className="hover:bg-gray-50/50 transition-colors group">
+                        <td className="py-4 px-6 font-medium text-gray-900">{student.name}</td>
+                        <td className="py-4 px-6 text-center">
+                          <input type="radio" name={`attendance-${i}`} defaultChecked className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <input type="radio" name={`attendance-${i}`} className="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300" />
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <input type="radio" name={`attendance-${i}`} className="w-4 h-4 text-rose-600 focus:ring-rose-500 border-gray-300" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <input type="text" placeholder="Add note..." className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         );
@@ -150,7 +156,7 @@ export default function Classes() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Active Classes</p>
-                    <h3 className="text-2xl font-bold text-gray-900">4</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">{classes?.length || 0}</h3>
                   </div>
                 </div>
               </div>
@@ -161,7 +167,7 @@ export default function Classes() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Total Students</p>
-                    <h3 className="text-2xl font-bold text-gray-900">128</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">{students?.length || 0}</h3>
                   </div>
                 </div>
               </div>
@@ -172,47 +178,51 @@ export default function Classes() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Avg. Attendance</p>
-                    <h3 className="text-2xl font-bold text-gray-900">94%</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">98%</h3>
                   </div>
                 </div>
               </div>
             </div>
 
-            <h3 className="text-lg font-bold text-gray-900 mb-4 shrink-0">Current Semester</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 shrink-0">Active Classes</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 shrink-0">
-              {[
-                { code: 'CS 301', name: 'Data Structures & Algorithms', students: 45, time: 'Mon/Wed 10:00 AM', room: 'Science Center 204' },
-                { code: 'CS 405', name: 'Machine Learning', students: 32, time: 'Tue/Thu 02:00 PM', room: 'Tech Hub 101' },
-                { code: 'ENG 101', name: 'Intro to Software Engineering', students: 51, time: 'Mon/Wed/Fri 09:00 AM', room: 'Main Hall A' },
-              ].map((course, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <span className="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg mb-2">
-                        {course.code}
-                      </span>
-                      <h4 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{course.name}</h4>
-                    </div>
-                    <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors">
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-400" />
-                      {course.students} Students
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      {course.time}
-                    </div>
-                    <div className="flex items-center gap-2 col-span-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      {course.room}
-                    </div>
-                  </div>
+              {isClassesLoading ? (
+                <div className="col-span-full flex justify-center py-10">
+                   <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
                 </div>
-              ))}
+              ) : classes?.length === 0 ? (
+                <div className="col-span-full py-12 text-center text-gray-500 italic border border-dashed rounded-2xl">No classes scheduled</div>
+              ) : (
+                classes?.map((cls: any, i: number) => (
+                  <div key={cls.id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <span className="inline-block px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg mb-2">
+                          COURSE-{cls.course_id.slice(0, 4)}
+                        </span>
+                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{cls.course_name || 'Generic Class'}</h4>
+                      </div>
+                      <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors">
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        {students?.length || 0} Students
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        {cls.schedule}
+                      </div>
+                      <div className="flex items-center gap-2 col-span-2">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        {cls.room}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         );

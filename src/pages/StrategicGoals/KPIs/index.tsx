@@ -1,7 +1,10 @@
 import React from 'react';
-import { TrendingUp, Activity, BarChart2 } from 'lucide-react';
+import { TrendingUp, Activity, BarChart2, Loader2, ArrowUpRight } from 'lucide-react';
+import { useKPIs } from '../../../hooks/useKPIs';
 
 export default function KPIs() {
+  const { data: kpis, isLoading } = useKPIs();
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex-1 flex flex-col md:flex-row px-4 md:px-6 gap-4 md:gap-6 overflow-hidden min-h-0">
@@ -22,9 +25,45 @@ export default function KPIs() {
         </div>
 
         {/* White Content Card */}
-        <div className="flex-1 bg-white rounded-2xl md:rounded-[2rem] p-6 md:p-8 xl:p-10 shadow-sm flex flex-col min-h-0">
+        <div className="flex-1 bg-white rounded-2xl md:rounded-[2rem] p-6 md:p-8 xl:p-10 shadow-sm flex flex-col min-h-0 overflow-y-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3 shrink-0">KPIs</h1>
           <p className="text-gray-500 mb-6 md:mb-8 text-sm md:text-base xl:text-lg shrink-0">Monitor Key Performance Indicators.</p>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {kpis?.map((kpi: any) => (
+                <div key={kpi.id} className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="font-bold text-gray-900">{kpi.name}</h3>
+                    <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-indigo-600">{kpi.value}</span>
+                    <span className="text-sm text-gray-500">{kpi.unit}</span>
+                  </div>
+                  <div className="mt-4 w-full bg-gray-200 rounded-full h-1.5">
+                    <div
+                      className="bg-indigo-600 h-1.5 rounded-full"
+                      style={{ width: `${Math.min((kpi.value / kpi.target) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                    <span>Target: {kpi.target} {kpi.unit}</span>
+                    <span>{Math.round((kpi.value / kpi.target) * 100)}%</span>
+                  </div>
+                </div>
+              ))}
+              {(!kpis || kpis.length === 0) && (
+                <div className="col-span-full py-12 text-center text-gray-500 italic border border-dashed rounded-2xl">
+                  No KPI metrics defined yet.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,11 +1,14 @@
 import React from 'react';
-import { MessageCircle, Reply, Archive, Search, Filter, MoreVertical, Eye, CheckCircle } from 'lucide-react';
+import { MessageCircle, Reply, Archive, Search, Filter, MoreVertical, Eye, CheckCircle, Loader2 } from 'lucide-react';
+import { useInquiries } from '../../../hooks/useInquiries';
 
 interface InquiriesProps {
   activeSubPage?: string;
 }
 
 export default function Inquiries({ activeSubPage = 'Inquiries' }: InquiriesProps) {
+  const { data: inquiries, isLoading } = useInquiries();
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex-1 flex flex-col md:flex-row px-4 md:px-6 gap-4 md:gap-6 overflow-hidden min-h-0">
@@ -52,71 +55,77 @@ export default function Inquiries({ activeSubPage = 'Inquiries' }: InquiriesProp
 
           {/* Data Table */}
           <div className="flex-1 min-h-0 overflow-auto border border-gray-100 rounded-2xl">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-50/50 sticky top-0 z-10 backdrop-blur-sm">
-                <tr>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Parent / Guardian</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Student Grade</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Date Received</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Status</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {[
-                  { name: 'Amanda Smith', email: 'asmith@example.com', grade: 'Grade 1', date: 'Oct 24, 2023', status: 'New' },
-                  { name: 'Robert Johnson', email: 'robert.j@example.com', grade: 'Kindergarten', date: 'Oct 23, 2023', status: 'Responded' },
-                  { name: 'Maria Garcia', email: 'mgarcia@example.com', grade: 'Grade 5', date: 'Oct 22, 2023', status: 'New' },
-                  { name: 'James Wilson', email: 'jwilson@example.com', grade: 'Grade 3', date: 'Oct 20, 2023', status: 'Archived' },
-                  { name: 'Linda Brown', email: 'lbrown@example.com', grade: 'Grade 8', date: 'Oct 19, 2023', status: 'Responded' },
-                ].map((inquiry, i) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="py-4 px-6">
-                      <div>
-                        <div className="font-medium text-gray-900">{inquiry.name}</div>
-                        <div className="text-xs text-gray-500">{inquiry.email}</div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-700">
-                      {inquiry.grade}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-500">
-                      {inquiry.date}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                        inquiry.status === 'New' 
-                          ? 'bg-blue-50 text-blue-700 border-blue-100' 
-                          : inquiry.status === 'Responded'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                          : 'bg-gray-50 text-gray-600 border-gray-200'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          inquiry.status === 'New' ? 'bg-blue-500' : 
-                          inquiry.status === 'Responded' ? 'bg-emerald-500' : 'bg-gray-400'
-                        }`}></span>
-                        {inquiry.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Details">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {inquiry.status === 'New' && (
-                          <button className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Mark Responded">
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              </div>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                  <tr>
+                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Parent / Guardian</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Contact</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Date Received</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">Status</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {inquiries?.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-gray-500 italic">No inquiries found</td>
+                    </tr>
+                  ) : (
+                    inquiries?.map((inquiry: any, i: number) => (
+                      <tr key={inquiry.id} className="hover:bg-gray-50/50 transition-colors group">
+                        <td className="py-4 px-6">
+                          <div>
+                            <div className="font-medium text-gray-900">{inquiry.name}</div>
+                            <div className="text-xs text-gray-500">{inquiry.email}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-700">
+                          {inquiry.phone || 'N/A'}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-500">
+                          {new Date(inquiry.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                            inquiry.status === 'pending'
+                              ? 'bg-blue-50 text-blue-700 border-blue-100'
+                              : inquiry.status === 'responded'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                              : 'bg-gray-50 text-gray-600 border-gray-200'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              inquiry.status === 'pending' ? 'bg-blue-500' :
+                              inquiry.status === 'responded' ? 'bg-emerald-500' : 'bg-gray-400'
+                            }`}></span>
+                            {inquiry.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Details">
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            {inquiry.status === 'pending' && (
+                              <button className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Mark Responded">
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

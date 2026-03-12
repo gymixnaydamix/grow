@@ -1,11 +1,14 @@
 import React from 'react';
-import { Inbox, Eye, Check, Search, Filter, MoreVertical, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Inbox, Eye, Check, Search, Filter, MoreVertical, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useApplications } from '../../../hooks/useApplications';
 
 interface ApplicationsProps {
   activeSubPage?: string;
 }
 
 export default function Applications({ activeSubPage = 'Applications' }: ApplicationsProps) {
+  const { data: applications, isLoading } = useApplications();
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex-1 flex flex-col md:flex-row px-4 md:px-6 gap-4 md:gap-6 overflow-hidden min-h-0">
@@ -67,66 +70,57 @@ export default function Applications({ activeSubPage = 'Applications' }: Applica
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {[
-                  { name: 'Leo Carter', id: 'APP-2024-001', grade: 'Grade 9', date: 'Oct 25, 2023', status: 'Under Review' },
-                  { name: 'Mia Patel', id: 'APP-2024-002', grade: 'Grade 10', date: 'Oct 24, 2023', status: 'Accepted' },
-                  { name: 'Noah Williams', id: 'APP-2024-003', grade: 'Grade 7', date: 'Oct 22, 2023', status: 'Pending Docs' },
-                  { name: 'Ava Thompson', id: 'APP-2024-004', grade: 'Grade 11', date: 'Oct 20, 2023', status: 'Interview Scheduled' },
-                  { name: 'Ethan Davis', id: 'APP-2024-005', grade: 'Grade 8', date: 'Oct 18, 2023', status: 'Rejected' },
-                ].map((app, i) => (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="py-4 px-6">
-                      <div>
-                        <div className="font-medium text-gray-900">{app.name}</div>
-                        <div className="text-xs text-gray-500">{app.id}</div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-700">
-                      {app.grade}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-500">
-                      {app.date}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                        app.status === 'Accepted' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                          : app.status === 'Rejected'
-                          ? 'bg-red-50 text-red-700 border-red-100'
-                          : app.status === 'Interview Scheduled'
-                          ? 'bg-purple-50 text-purple-700 border-purple-100'
-                          : 'bg-amber-50 text-amber-700 border-amber-100'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          app.status === 'Accepted' ? 'bg-emerald-500' : 
-                          app.status === 'Rejected' ? 'bg-red-500' : 
-                          app.status === 'Interview Scheduled' ? 'bg-purple-500' : 'bg-amber-500'
-                        }`}></span>
-                        {app.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Application">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {app.status !== 'Accepted' && app.status !== 'Rejected' && (
-                          <>
-                            <button className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Accept">
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                            <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Reject">
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-                        <button className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </div>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center">
+                      <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
                     </td>
                   </tr>
-                ))}
+                ) : applications?.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-gray-500 italic">No applications found</td>
+                  </tr>
+                ) : (
+                  applications?.map((app: any, i: number) => (
+                    <tr key={app.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <td className="py-4 px-6">
+                        <div>
+                          <div className="font-medium text-gray-900">{app.student_name}</div>
+                          <div className="text-xs text-gray-500">{app.email}</div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-sm text-gray-700">
+                        {app.grade_applying_for}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-gray-500">
+                        {new Date(app.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                          app.status === 'submitted' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                          app.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                          'bg-gray-50 text-gray-600 border-gray-200'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            app.status === 'submitted' ? 'bg-blue-500' :
+                            app.status === 'accepted' ? 'bg-emerald-500' : 'bg-gray-400'
+                          }`}></span>
+                          {app.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Application">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -1,53 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Inbox, Send, AlertCircle, Plus, Search, Filter, MoreVertical, Download, CheckCircle, Clock } from 'lucide-react';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
-import { db, auth } from '../../../firebase';
-import { useFirebase } from '../../../components/FirebaseProvider';
-import { handleFirestoreError, OperationType } from '../../../utils/firestoreErrorHandler';
+import React, { useState } from 'react';
+import { Inbox, Send, AlertCircle, Plus, Search, Filter, MoreVertical, Download, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import CreateInvoiceModal from './CreateInvoiceModal';
+import { useInvoices } from '../../../hooks/useInvoices';
 
 export default function Invoices() {
-  const [activeTab, setActiveTab] = useState('Received');
-  const { isAuthReady, userRole } = useFirebase();
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('Sent');
+  const { data: invoices, isLoading } = useInvoices();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createModalType, setCreateModalType] = useState<'received' | 'sent'>('received');
 
-  useEffect(() => {
-    if (!isAuthReady || !auth.currentUser) {
-      setLoading(false);
-      return;
-    }
-
-    // Only Finance or Admin can read invoices based on our rules
-    if (userRole !== 'finance' && userRole !== 'admin') {
-      setLoading(false);
-      return;
-    }
-
-    const path = 'invoices';
-    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedInvoices = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setInvoices(fetchedInvoices);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, path, auth);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [isAuthReady, userRole]);
-
   // Filter invoices based on active tab
-  const receivedInvoices = invoices.filter(inv => inv.type === 'received');
-  const sentInvoices = invoices.filter(inv => inv.type === 'sent');
-  const overdueInvoices = invoices.filter(inv => inv.status === 'Overdue');
+  const sentInvoices = invoices?.filter(inv => inv.amount > 0) || [];
+  const overdueInvoices = invoices?.filter(inv => inv.status === 'overdue') || [];
 
   const openCreateModal = (type: 'received' | 'sent') => {
     setCreateModalType(type);
@@ -55,28 +19,10 @@ export default function Invoices() {
   };
 
   const renderContent = () => {
-    if (loading) {
+    if (isLoading) {
       return (
         <div className="flex-1 flex items-center justify-center min-h-0">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
-      );
-    }
-
-    if (!auth.currentUser) {
-      return (
-        <div className="flex-1 flex flex-col items-center justify-center min-h-0 text-gray-500">
-          <AlertCircle className="w-12 h-12 mb-4 text-gray-400" />
-          <p>Please log in to view invoices.</p>
-        </div>
-      );
-    }
-
-    if (userRole !== 'finance' && userRole !== 'admin') {
-      return (
-        <div className="flex-1 flex flex-col items-center justify-center min-h-0 text-gray-500">
-          <AlertCircle className="w-12 h-12 mb-4 text-gray-400" />
-          <p>You do not have permission to view invoices.</p>
+          <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
         </div>
       );
     }
@@ -126,18 +72,18 @@ export default function Invoices() {
                 <tbody className="divide-y divide-gray-100">
                   {sentInvoices.length > 0 ? sentInvoices.map((inv, i) => (
                     <tr key={inv.id || i} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="py-4 px-6 font-medium text-indigo-600 cursor-pointer hover:underline">{inv.invoiceNumber}</td>
-                      <td className="py-4 px-6 text-sm text-gray-900">{inv.entityName}</td>
+                      <td className="py-4 px-6 font-medium text-indigo-600 cursor-pointer hover:underline">INV-{inv.id.slice(0, 8)}</td>
+                      <td className="py-4 px-6 text-sm text-gray-900">{inv.student_id}</td>
                       <td className="py-4 px-6 text-sm font-semibold text-gray-900">${inv.amount?.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                      <td className="py-4 px-6 text-sm text-gray-500">{inv.date ? new Date(inv.date).toLocaleDateString() : '-'}</td>
+                      <td className="py-4 px-6 text-sm text-gray-500">{inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '-'}</td>
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                          inv.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border capitalize ${
+                          inv.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                          inv.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-100' :
                           'bg-gray-50 text-gray-700 border-gray-200'
                         }`}>
-                          {inv.status === 'Paid' && <CheckCircle className="w-3 h-3" />}
-                          {inv.status === 'Pending' && <Clock className="w-3 h-3" />}
+                          {inv.status === 'paid' && <CheckCircle className="w-3 h-3" />}
+                          {inv.status === 'pending' && <Clock className="w-3 h-3" />}
                           {inv.status}
                         </span>
                       </td>
@@ -199,10 +145,10 @@ export default function Invoices() {
                         <td className="py-4 px-6">
                           <input type="checkbox" className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                         </td>
-                        <td className="py-4 px-6 font-medium text-indigo-600 cursor-pointer hover:underline">{inv.invoiceNumber}</td>
-                        <td className="py-4 px-6 text-sm text-gray-900">{inv.entityName}</td>
+                        <td className="py-4 px-6 font-medium text-indigo-600 cursor-pointer hover:underline">INV-{inv.id.slice(0, 8)}</td>
+                        <td className="py-4 px-6 text-sm text-gray-900">{inv.student_id}</td>
                         <td className="py-4 px-6 text-sm font-semibold text-gray-900">${inv.amount?.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                        <td className="py-4 px-6 text-sm text-gray-500">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
+                        <td className="py-4 px-6 text-sm text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '-'}</td>
                         <td className="py-4 px-6">
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-100">
                             {diffDays} Days

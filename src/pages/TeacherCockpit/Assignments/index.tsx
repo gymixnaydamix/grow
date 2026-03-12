@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Book, Edit3, Archive, Plus, Search, Filter, MoreVertical, FileText, Clock, CheckCircle } from 'lucide-react';
+import { Book, Edit3, Archive, Plus, Search, Filter, MoreVertical, FileText, Clock, Loader2 } from 'lucide-react';
+import { useAssignments } from '../../../hooks/useAssignments';
 
 export default function Assignments() {
   const [activeTab, setActiveTab] = useState('Active');
+  const { data: assignments, isLoading } = useAssignments();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -69,25 +71,9 @@ export default function Assignments() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {[
-                    { title: 'Final Essay Submission', course: 'ENG 101', term: 'Spring 2023' },
-                    { title: 'Algorithm Analysis Project', course: 'CS 301', term: 'Spring 2023' },
-                    { title: 'Physics Lab 4', course: 'PHY 101', term: 'Fall 2022' },
-                  ].map((item, i) => (
-                    <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="py-4 px-6 font-medium text-gray-900">
-                        <div className="flex items-center gap-3">
-                          <Archive className="w-4 h-4 text-gray-400" />
-                          {item.title}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">{item.course}</td>
-                      <td className="py-4 px-6 text-sm text-gray-500">{item.term}</td>
-                      <td className="py-4 px-6 text-right">
-                        <button className="text-sm font-medium text-indigo-600 hover:text-indigo-800">Restore</button>
-                      </td>
-                    </tr>
-                  ))}
+                  <tr className="hover:bg-gray-50/50 transition-colors group">
+                    <td colSpan={4} className="py-12 text-center text-gray-500 italic">No archived assignments</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -112,55 +98,41 @@ export default function Assignments() {
             </div>
             
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 overflow-y-auto pb-4">
-              {[
-                { title: 'Homework 4: Binary Trees', course: 'CS 301', due: 'Tomorrow, 11:59 PM', submitted: 38, total: 45, status: 'urgent' },
-                { title: 'Essay Draft 1', course: 'ENG 101', due: 'Oct 28, 11:59 PM', submitted: 12, total: 51, status: 'normal' },
-                { title: 'Lab 3 Report', course: 'PHY 101', due: 'Oct 30, 05:00 PM', submitted: 5, total: 30, status: 'normal' },
-                { title: 'Quiz 2: Sorting', course: 'CS 301', due: 'Nov 02, In Class', submitted: 0, total: 45, status: 'upcoming' },
-              ].map((assignment, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all group">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        assignment.status === 'urgent' ? 'bg-rose-50 text-rose-600' :
-                        assignment.status === 'upcoming' ? 'bg-blue-50 text-blue-600' :
-                        'bg-indigo-50 text-indigo-600'
-                      }`}>
-                        <FileText className="w-5 h-5" />
+              {isLoading ? (
+                <div className="col-span-full flex justify-center py-20">
+                  <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                </div>
+              ) : assignments?.length === 0 ? (
+                <div className="col-span-full py-12 text-center text-gray-500 italic border border-dashed rounded-2xl">No active assignments found</div>
+              ) : (
+                assignments?.map((assignment: any, i: number) => (
+                  <div key={assignment.id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-indigo-300 hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900">{assignment.title}</h4>
+                          <p className="text-xs font-medium text-indigo-600">Course: {assignment.course_id.slice(0, 8)}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-gray-900">{assignment.title}</h4>
-                        <p className="text-xs font-medium text-indigo-600">{assignment.course}</p>
-                      </div>
-                    </div>
-                    <button className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className={`w-4 h-4 ${assignment.status === 'urgent' ? 'text-rose-500' : 'text-gray-400'}`} />
-                      <span className={assignment.status === 'urgent' ? 'text-rose-600 font-medium' : 'text-gray-600'}>
-                        Due: {assignment.due}
-                      </span>
+                      <button className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg transition-colors">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-gray-900">{assignment.submitted}</span>
-                        <span className="text-xs text-gray-500"> / {assignment.total}</span>
-                      </div>
-                      <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${assignment.submitted === assignment.total ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-                          style={{ width: `${(assignment.submitted / assignment.total) * 100}%` }}
-                        ></div>
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600">
+                          Due: {new Date(assignment.due_date).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         );
@@ -170,7 +142,6 @@ export default function Assignments() {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex-1 flex flex-col md:flex-row px-4 md:px-6 gap-4 md:gap-6 overflow-hidden min-h-0">
-        {/* Left Sub-nav Pill */}
         <div className="w-full md:w-fit h-fit bg-[#645C9A] rounded-2xl md:rounded-[2rem] flex flex-row md:flex-col items-center justify-center p-2 md:py-6 md:px-3 xl:px-4 gap-2 md:gap-6 text-white/60 shadow-sm shrink-0 overflow-x-auto no-scrollbar md:-ml-2 lg:-ml-4">
           <button 
             onClick={() => setActiveTab('Active')}
@@ -195,7 +166,6 @@ export default function Assignments() {
           </button>
         </div>
 
-        {/* White Content Card */}
         <div className="flex-1 bg-white rounded-2xl md:rounded-[2rem] p-6 md:p-8 xl:p-10 shadow-sm flex flex-col min-h-0 overflow-hidden">
           {renderContent()}
         </div>

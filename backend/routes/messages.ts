@@ -1,15 +1,14 @@
 import { Router } from 'express';
+import db from '../db';
+import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
 
 const router = Router();
+router.use(protect);
 
-// Get all messages
-router.get('/', (req, res) => {
-  res.json({ message: 'List of messages' });
-});
-
-// Create a new message
-router.post('/', (req, res) => {
-  res.json({ message: 'Message created' });
-});
+router.get('/', catchAsync(async (req: any, res) => {
+  const data = db.prepare('SELECT * FROM messages WHERE school_id = ? AND (sender_id = ? OR receiver_id = ?) ORDER BY created_at DESC').all(req.user.school_id, req.user.id, req.user.id);
+  res.json({ status: 'success', data });
+}));
 
 export default router;

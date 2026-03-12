@@ -1,27 +1,26 @@
 import { Router } from 'express';
+import db from '../db';
+import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
 
 const router = Router();
+router.use(protect);
 
-router.get('/', (req, res) => {
+router.get('/', catchAsync(async (req: any, res) => {
+  const schoolId = req.user.school_id;
+
+  const attendance = db.prepare('SELECT status, COUNT(*) as count FROM attendance WHERE school_id = ? GROUP BY status').all(schoolId);
+  const grades = db.prepare('SELECT grade, COUNT(*) as count FROM grades WHERE school_id = ? GROUP BY grade').all(schoolId);
+  const revenue = db.prepare('SELECT SUM(amount) as total, status FROM invoices WHERE school_id = ? GROUP BY status').all(schoolId);
+
   res.json({
-    userEngagement: [
-      { day: 'Mon', value: 400 },
-      { day: 'Tue', value: 300 },
-      { day: 'Wed', value: 550 },
-      { day: 'Thu', value: 450 },
-      { day: 'Fri', value: 600 },
-      { day: 'Sat', value: 800 },
-      { day: 'Sun', value: 750 },
-    ],
-    conversionRate: 4.2,
-    bounceRate: 32.5,
-    topSources: [
-      { source: 'Direct', percentage: 45 },
-      { source: 'Organic Search', percentage: 30 },
-      { source: 'Social', percentage: 15 },
-      { source: 'Referral', percentage: 10 },
-    ]
+    status: 'success',
+    data: {
+      attendance,
+      grades,
+      revenue
+    }
   });
-});
+}));
 
 export default router;
