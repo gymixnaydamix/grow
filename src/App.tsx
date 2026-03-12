@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   Search, Bell, ChevronDown, User, Settings, Building, Bus, Package, 
   ShieldCheck, UserPlus, TrendingUp, LayoutDashboard, CheckCircle2, 
@@ -123,6 +124,7 @@ const headerButtonsConfig: Record<string, { icon: any, label: string }[]> = {
 };
 
 export default function App() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -318,9 +320,8 @@ export default function App() {
             </div>
             
             {/* Right Button */}
-            <button className="bg-[#4F46E5] text-white px-3 py-2 md:px-5 md:py-3 xl:px-8 xl:py-4 rounded-lg md:rounded-xl xl:rounded-2xl font-semibold text-xs md:text-sm xl:text-lg shadow-md hover:bg-indigo-700 transition-colors whitespace-nowrap shrink-0">
-              <span className="hidden sm:inline">{activePage}</span>
-              <span className="sm:hidden">{activePage}</span>
+            <button className="bg-[#4F46E5] text-white px-3 py-2 md:px-5 md:py-3 xl:px-8 xl:py-4 rounded-lg md:rounded-xl xl:rounded-2xl font-semibold text-xs md:text-sm xl:text-lg shadow-md hover:bg-indigo-700 transition-colors whitespace-nowrap shrink-0 uppercase tracking-widest">
+              {t(`nav.${Object.entries(pageToPathMap).find(([label]) => label === activePage)?.[1] || 'dashboard'}`)}
             </button>
           </div>
         </div>

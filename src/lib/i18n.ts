@@ -27,6 +27,12 @@ i18n
             hr: 'HR & Staff',
             admissions: 'Admissions',
             ai: 'Concierge AI',
+            student: 'Student Portal',
+            teacher: 'Teacher Cockpit',
+            credentials: 'Credentials',
+            strategic: 'Strategic Goals',
+            logs: 'Activity Logs',
+            settings: 'Settings',
           }
         }
       },
@@ -46,6 +52,12 @@ i18n
             hr: 'RR.HH. y Personal',
             admissions: 'Admisiones',
             ai: 'Conserje IA',
+            student: 'Portal del Estudiante',
+            teacher: 'Cabina del Profesor',
+            credentials: 'Credenciales',
+            strategic: 'Objetivos Estratégicos',
+            logs: 'Registros de Actividad',
+            settings: 'Ajustes',
           }
         }
       }
