@@ -1,15 +1,14 @@
 import { Router } from 'express';
+import db from '../db';
+import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
 
 const router = Router();
+router.use(protect);
 
-// Get all certificates
-router.get('/', (req, res) => {
-  res.json({ message: 'List of certificates' });
-});
-
-// Create a new certificate
-router.post('/', (req, res) => {
-  res.json({ message: 'Certificate created' });
-});
+router.get('/', catchAsync(async (req: any, res) => {
+  const data = db.prepare('SELECT * FROM certificates WHERE school_id = ?').all(req.user.school_id);
+  res.json({ status: 'success', data });
+}));
 
 export default router;

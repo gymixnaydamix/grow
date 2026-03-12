@@ -1,13 +1,13 @@
 import React from 'react';
 import { Inbox, Eye, Check, Search, Filter, MoreVertical, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { useStudents } from '../../../hooks/useStudents';
+import { useApplications } from '../../../hooks/useApplications';
 
 interface ApplicationsProps {
   activeSubPage?: string;
 }
 
 export default function Applications({ activeSubPage = 'Applications' }: ApplicationsProps) {
-  const { data: students, isLoading } = useStudents();
+  const { data: applications, isLoading } = useApplications();
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -76,25 +76,36 @@ export default function Applications({ activeSubPage = 'Applications' }: Applica
                       <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
                     </td>
                   </tr>
+                ) : applications?.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-gray-500 italic">No applications found</td>
+                  </tr>
                 ) : (
-                  students?.map((app: any, i: number) => (
+                  applications?.map((app: any, i: number) => (
                     <tr key={app.id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="py-4 px-6">
                         <div>
-                          <div className="font-medium text-gray-900">{app.name}</div>
-                          <div className="text-xs text-gray-500">{app.id}</div>
+                          <div className="font-medium text-gray-900">{app.student_name}</div>
+                          <div className="text-xs text-gray-500">{app.email}</div>
                         </div>
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-700">
-                        {app.grade}
+                        {app.grade_applying_for}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-500">
                         {new Date(app.created_at).toLocaleDateString()}
                       </td>
                       <td className="py-4 px-6">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-100">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          Enrolled
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                          app.status === 'submitted' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                          app.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                          'bg-gray-50 text-gray-600 border-gray-200'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            app.status === 'submitted' ? 'bg-blue-500' :
+                            app.status === 'accepted' ? 'bg-emerald-500' : 'bg-gray-400'
+                          }`}></span>
+                          {app.status}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right">

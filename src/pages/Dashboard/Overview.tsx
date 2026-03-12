@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { Users, DollarSign, TrendingUp, Activity, CheckCircle, Clock, Info } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Activity, CheckCircle, Clock, Info, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '../../lib/api-client';
 
 interface OverviewData {
   activeUsers: number;
@@ -16,26 +18,18 @@ interface OverviewData {
 }
 
 export default function Overview() {
-  const [data, setData] = useState<OverviewData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useQuery({
+    queryKey: ['overview'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/overview');
+      return data as OverviewData;
+    },
+  });
 
-  useEffect(() => {
-    fetch('/api/overview')
-      .then(res => res.json())
-      .then(data => {
-        setData(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch overview data', err);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
       </div>
     );
   }

@@ -1,15 +1,23 @@
 import { Router } from 'express';
+import db from '../db';
+import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
+router.use(protect);
 
-// Get all assignments
-router.get('/', (req, res) => {
-  res.json({ message: 'List of assignments' });
-});
+router.get('/', catchAsync(async (req: any, res) => {
+  const data = db.prepare('SELECT * FROM assignments WHERE school_id = ?').all(req.user.school_id);
+  res.json({ status: 'success', data });
+}));
 
-// Create a new assignment
-router.post('/', (req, res) => {
-  res.json({ message: 'Assignment created' });
-});
+router.post('/', catchAsync(async (req: any, res) => {
+  const { course_id, title, description, due_date } = req.body;
+  const id = uuidv4();
+  db.prepare('INSERT INTO assignments (id, course_id, title, description, due_date, school_id) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(id, course_id, title, description, due_date, req.user.school_id);
+  res.status(201).json({ status: 'success', data: { id, title } });
+}));
 
 export default router;

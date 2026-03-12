@@ -7,13 +7,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { protect } from '../middleware/auth';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET;
+const SECRET = process.env.JWT_SECRET || 'super-secret-key-unsafe';
 
-if (!JWT_SECRET) {
-  console.warn('WARNING: JWT_SECRET is not set in environment variables. Using unsafe default.');
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required for production.');
 }
-
-const SECRET = JWT_SECRET || 'super-secret-key-unsafe';
 
 // Initialize a default admin if not exists
 const initAdmin = async () => {

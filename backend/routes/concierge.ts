@@ -13,6 +13,12 @@ router.get('/documents', protect, catchAsync(async (req: any, res) => {
   res.json({ status: 'success', data: docs });
 }));
 
+// Delete a document
+router.delete('/documents/:id', protect, catchAsync(async (req: any, res) => {
+  db.prepare('DELETE FROM documents WHERE id = ? AND school_id = ?').run(req.params.id, req.user.school_id);
+  res.json({ status: 'success' });
+}));
+
 // Endpoint to "ingest" a document (store its content in DB)
 router.post('/ingest', protect, catchAsync(async (req: any, res) => {
   const { title, content, type } = req.body;
@@ -28,30 +34,52 @@ router.post('/ingest', protect, catchAsync(async (req: any, res) => {
 router.post('/chat', protect, catchAsync(async (req: any, res) => {
   const { message } = req.body;
 
-  // Simple RAG: find documents related to the message
-  // In a real app, use vector search. Here we use basic LIKE for demonstration.
-  const docs: any = db.prepare('SELECT content FROM documents WHERE school_id = ? AND content LIKE ? LIMIT 3')
-    .all(req.user.school_id, `%${message}%`);
+  if (process.env.NODE_ENV === 'production' && !process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is required for the AI Concierge in production.');
+  }
+
+  // Refined RAG: keyword extraction for better LIKE matching
+  const keywords = message.split(' ').filter((w: string) => w.length > 3);
+  let docs: any[] = [];
+
+  if (keywords.length > 0) {
+    const conditions = keywords.map(() => 'content LIKE ?').join(' OR ');
+    const params = keywords.map((k: string) => `%${k}%`);
+    docs = db.prepare(`SELECT content FROM documents WHERE school_id = ? AND (${conditions}) LIMIT 5`)
+      .all(req.user.school_id, ...params);
+  } else {
+    docs = db.prepare('SELECT content FROM documents WHERE school_id = ? LIMIT 3').all(req.user.school_id);
+  }
 
   const context = docs.map((d: any) => d.content).join('\n\n');
 
-  const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  try {
+    const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY || 'AIzaSy...dummy');
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  const prompt = `
-    You are a school AI concierge. Use the following context to answer the user's question.
-    If the context doesn't contain the answer, use your general knowledge but mention it's not in the official documents.
+    const prompt = `
+      You are a helpful school AI concierge. Use the provided context from the school's official documents to answer the user's question accurately.
+      If the context doesn't contain the answer, use your general knowledge but clearly state that the information is not found in the official school documents.
+      Be professional, encouraging, and concise.
 
-    Context:
-    ${context}
+      Context:
+      ${context || 'No specific document context available.'}
 
-    Question: ${message}
-  `;
+      User Question: ${message}
+    `;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
 
-  res.json({ status: 'success', reply: response.text() });
+    res.json({ status: 'success', reply: response.text() });
+  } catch (error: any) {
+    console.error('AI Error:', error);
+    res.json({
+      status: 'success',
+      reply: "I'm currently having trouble reaching my AI core, but I can still search the documents for you. " +
+             (context ? "I found some relevant information in our records: " + context.substring(0, 200) + "..." : "Unfortunately, I couldn't find any relevant documents either.")
+    });
+  }
 }));
 
 export default router;

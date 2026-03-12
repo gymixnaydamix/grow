@@ -1,15 +1,21 @@
 import { Router } from 'express';
+import db from '../db';
+import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
 
 const router = Router();
+router.use(protect);
 
-// Get general settings
-router.get('/', (req, res) => {
-  res.json({ message: 'General settings' });
-});
+router.get('/', catchAsync(async (req: any, res) => {
+  const data = db.prepare('SELECT * FROM settings WHERE school_id = ? AND key LIKE "general_%"').all(req.user.school_id);
+  res.json({ status: 'success', data });
+}));
 
-// Update general settings
-router.post('/', (req, res) => {
-  res.json({ message: 'General settings updated' });
-});
+router.post('/', catchAsync(async (req: any, res) => {
+  const { key, value } = req.body;
+  db.prepare('INSERT OR REPLACE INTO settings (key, value, school_id) VALUES (?, ?, ?)')
+    .run(key, value, req.user.school_id);
+  res.json({ status: 'success' });
+}));
 
 export default router;
