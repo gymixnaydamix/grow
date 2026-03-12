@@ -30,6 +30,7 @@ export default function ConciergeAI() {
   const ingestMutation = useIngestDocument();
   const [isAddDocModalOpen, setIsAddDocModalOpen] = useState(false);
   const [newDoc, setNewDoc] = useState({ title: '', content: '', type: 'policy' });
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -310,14 +311,40 @@ export default function ConciergeAI() {
               </button>
               <button
                 onClick={async () => {
+                  // Simulate upload progress
+                  setUploadProgress(1);
+                  const interval = setInterval(() => {
+                    setUploadProgress(prev => {
+                      if (prev >= 95) {
+                        clearInterval(interval);
+                        return prev;
+                      }
+                      return prev + Math.random() * 20;
+                    });
+                  }, 100);
+
                   await ingestMutation.mutateAsync(newDoc);
-                  setIsAddDocModalOpen(false);
-                  setNewDoc({ title: '', content: '', type: 'policy' });
+
+                  clearInterval(interval);
+                  setUploadProgress(100);
+                  setTimeout(() => {
+                    setIsAddDocModalOpen(false);
+                    setNewDoc({ title: '', content: '', type: 'policy' });
+                    setUploadProgress(0);
+                  }, 500);
                 }}
                 disabled={ingestMutation.isPending || !newDoc.title || !newDoc.content}
-                className="flex-1 py-3 bg-indigo-600 text-white font-semibold rounded-2xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50"
+                className="relative overflow-hidden flex-1 py-3 bg-indigo-600 text-white font-semibold rounded-2xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50"
               >
-                {ingestMutation.isPending ? 'Ingesting...' : 'Ingest Document'}
+                {uploadProgress > 0 && (
+                  <div
+                    className="absolute inset-0 bg-indigo-500 transition-all duration-300 origin-left"
+                    style={{ transform: `scaleX(${uploadProgress / 100})` }}
+                  />
+                )}
+                <span className="relative z-10">
+                  {ingestMutation.isPending ? 'Ingesting...' : 'Ingest Document'}
+                </span>
               </button>
             </div>
           </div>

@@ -3,6 +3,8 @@ import db from '../db';
 import { catchAsync } from '../utils/error-handler';
 import { protect } from '../middleware/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { validate } from '../middleware/validate';
+import { studentSchema } from '../validations';
 
 const router = Router();
 router.use(protect);
@@ -12,7 +14,7 @@ router.get('/', catchAsync(async (req: any, res) => {
   res.json({ status: 'success', data });
 }));
 
-router.post('/', catchAsync(async (req: any, res) => {
+router.post('/', validate(studentSchema), catchAsync(async (req: any, res) => {
   const { name, email, grade } = req.body;
   const id = uuidv4();
   db.prepare('INSERT INTO students (id, name, email, grade, school_id) VALUES (?, ?, ?, ?, ?)')

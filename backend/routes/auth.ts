@@ -5,6 +5,8 @@ import { catchAsync, AppError } from '../utils/error-handler';
 import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
 import { protect } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { loginSchema } from '../validations';
 
 const router = Router();
 const SECRET = process.env.JWT_SECRET || 'super-secret-key-unsafe';
@@ -24,12 +26,8 @@ const initAdmin = async () => {
 };
 initAdmin();
 
-router.post('/login', catchAsync(async (req, res, next) => {
+router.post('/login', validate(loginSchema), catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return next(new AppError('Please provide email and password', 400));
-  }
 
   const user: any = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
   if (!user || !(await bcrypt.compare(password, user.password))) {

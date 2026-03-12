@@ -3,6 +3,8 @@ import db from '../db';
 import { catchAsync } from '../utils/error-handler';
 import { protect } from '../middleware/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { validate } from '../middleware/validate';
+import { invoiceSchema } from '../validations';
 
 const router = Router();
 
@@ -20,7 +22,7 @@ router.get('/', catchAsync(async (req: any, res) => {
 }));
 
 // Create a new invoice
-router.post('/', catchAsync(async (req: any, res) => {
+router.post('/', validate(invoiceSchema), catchAsync(async (req: any, res) => {
   const { student_id, amount, status, due_date } = req.body;
   const id = uuidv4();
 

@@ -4,6 +4,7 @@ import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import { catchAsync } from '../utils/error-handler';
+import { v4 as uuidv4 as uuid } from 'uuid';
 
 const router = Router();
 
@@ -22,6 +23,10 @@ router.post('/', protect, restrictTo('admin'), catchAsync(async (req: any, res) 
 
   db.prepare('INSERT INTO users (id, email, password, role, name, school_id) VALUES (?, ?, ?, ?, ?, ?)')
     .run(id, email, hashedPassword, role, name, req.user.school_id);
+
+  // Log audit trail
+  db.prepare('INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, school_id) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(uuidv4(), req.user.id, 'CREATE', 'USER', id, req.user.school_id);
 
   res.status(201).json({ status: 'success', data: { id, email, role, name } });
 }));
