@@ -225,6 +225,35 @@ db.exec(`
     school_id TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS recruitment (
+    id TEXT PRIMARY KEY,
+    job_title TEXT NOT NULL,
+    department TEXT,
+    status TEXT DEFAULT 'open', -- 'open', 'closed'
+    description TEXT,
+    school_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS objectives (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    target_date DATETIME,
+    status TEXT DEFAULT 'active',
+    school_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS badges (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    icon TEXT,
+    school_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 export default db;

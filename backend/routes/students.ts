@@ -1,26 +1,23 @@
 import { Router } from 'express';
-import { protect, restrictTo } from '../middleware/auth';
 import db from '../db';
-import { v4 as uuidv4 } from 'uuid';
 import { catchAsync } from '../utils/error-handler';
+import { protect } from '../middleware/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
+router.use(protect);
 
-// Get all students
-router.get('/', protect, catchAsync(async (req: any, res) => {
-  const students = db.prepare('SELECT * FROM students WHERE school_id = ?').all(req.user.school_id);
-  res.json({ status: 'success', data: students });
+router.get('/', catchAsync(async (req: any, res) => {
+  const data = db.prepare('SELECT * FROM students WHERE school_id = ?').all(req.user.school_id);
+  res.json({ status: 'success', data });
 }));
 
-// Create a new student
-router.post('/', protect, restrictTo('admin', 'admissions'), catchAsync(async (req: any, res) => {
+router.post('/', catchAsync(async (req: any, res) => {
   const { name, email, grade } = req.body;
   const id = uuidv4();
-
   db.prepare('INSERT INTO students (id, name, email, grade, school_id) VALUES (?, ?, ?, ?, ?)')
     .run(id, name, email, grade, req.user.school_id);
-
-  res.status(201).json({ status: 'success', data: { id, name, email, grade } });
+  res.status(201).json({ status: 'success', data: { id, name } });
 }));
 
 export default router;
